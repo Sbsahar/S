@@ -1610,44 +1610,43 @@ def handle_edited_custom_emoji_message(message):
 
                         except Exception as e:
                             print(f"حدث خطأ أثناء معالجة الرمز التعبيري المعدل: {e}")
-                            
 def handle_edited_message(message):
-    """التعامل مع الرسائل المعدلة وفحص محتواها باستخدام مكتبة OpenNSFW2"""
+    """التعامل مع الرسائل المعدلة وفحص الصور بعد التعديل"""
     if group_detection_status.get(message.chat.id, 'disabled') == 'enabled':
         user_id = message.from_user.id
         chat_id = message.chat.id
         user_name = f"@{message.from_user.username}" if message.from_user.username else f"({user_id})"
 
-        try:
-            # فحص الصور المعدلة
-            if message.content_type == 'photo':  
-                file_id = message.photo[-1].file_id
-                file_info = bot.get_file(file_id)
-                file_link = f'https://api.telegram.org/file/bot{TOKEN}/{file_info.file_path}'
+        # التحقق مما إذا كانت الرسالة قد تم تعديلها إلى صورة
+        if hasattr(message, 'edit_date') and message.photo:
+            file_id = message.photo[-1].file_id
+            file_info = bot.get_file(file_id)
+            file_link = f'https://api.telegram.org/file/bot{TOKEN}/{file_info.file_path}'
 
-                # تنزيل الصورة مؤقتًا
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
-                    response = requests.get(file_link)
-                    if response.status_code == 200:
-                        tmp_file.write(response.content)
-                        temp_path = tmp_file.name
-                    else:
-                        print(f"فشل تحميل الصورة المعدلة، رمز الحالة: {response.status_code}")
-                        return
+            # تنزيل الصورة مؤقتًا
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+                response = requests.get(file_link)
+                if response.status_code == 200:
+                    tmp_file.write(response.content)
+                    temp_path = tmp_file.name
+                else:
+                    print(f"فشل تحميل الصورة المعدلة، رمز الحالة: {response.status_code}")
+                    return
 
-                # فحص الصورة
-                res = check_image_safety(temp_path)
-                os.remove(temp_path)  # حذف الملف المؤقت بعد الفحص
+            # فحص الصورة
+            res = check_image_safety(temp_path)
+            os.remove(temp_path)  # حذف الملف المؤقت بعد الفحص
 
-                if res == 'nude':  
-                    bot.delete_message(chat_id, message.message_id)
-                    alert_message = (
-                        f"🚨 <b>تنبيه:</b>\n"
-                        f"🔗 المستخدم {user_name} <b>حاول تعديل رسالة قديمة إلى صورة غير لائقة!</b>\n\n"
-                        "⚠️ <b>وجب على المشرفين التعامل معه فورًا بحظره أو تحذيره.</b>"
-                    )
-                    bot.send_message(chat_id, alert_message, parse_mode="HTML")
-                    update_violations(user_id, chat_id)
+            if res == 'nude':
+                bot.delete_message(chat_id, message.message_id)
+                alert_message = (
+                    f"🚨 <b>تنبيه:</b>\n"
+                    f"🔗 المستخدم {user_name} <b>حاول تعديل رسالة إلى صورة غير لائقة!</b>\n\n"
+                    "⚠️ <b>وجب على المشرفين التعامل معه فورًا بحظره أو تحذيره.</b>"
+                )
+                bot.send_message(chat_id, alert_message, parse_mode="HTML")
+                update_violations(user_id, chat_id)                            
+
 
             # فحص الملصقات المعدلة
             elif message.content_type == 'sticker': 
