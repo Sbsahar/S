@@ -15,6 +15,7 @@ import time
 import json
 from telebot.types import BotCommand
 import logging
+from telebot.types import ChatMemberUpdated
 # إعدادات التسجيل
 logging.basicConfig(
     level=logging.INFO,
