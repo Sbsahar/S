@@ -1145,8 +1145,7 @@ def settings(message):
     )
 
 # استقبال ضغطات الأزرار مع التحقق من هوية المستخدم
-
-    )              
+         
 # استقبال ضغطات الأزرار مع التحقق من هوية المستخدم
 @bot.callback_query_handler(func=lambda call: call.data.startswith("settings_"))
 def handle_settings_callback(call):
