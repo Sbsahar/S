@@ -527,35 +527,7 @@ def remove_banned_word(message):
         banned_words[group_id] = [w for w in banned_words[group_id] if w.lower() != word.lower()]
         save_banned_words()
         bot.reply_to(message, f"✅ تم إزالة الكلمة '{word}' من القائمة المحظورة للمجموعة.")
-@bot.message_handler(func=lambda message: message.content_type == 'text')
-def check_banned_words_in_message(message):
-    if message.chat.type == "private":
-        return
-
-    group_id = str(message.chat.id)
-    if group_id not in banned_words or not banned_words[group_id]:
-        return
-
-    text = message.text
-
-    # البحث عن الكلمات المحظورة ككلمات كاملة مع تجاهل حالة الحروف
-    for word in banned_words[group_id]:
-        pattern = r'\b' + re.escape(word) + r'\b'
-        if re.search(pattern, text, flags=re.IGNORECASE):
-            try:
-                bot.delete_message(message.chat.id, message.message_id)
-            except Exception as e:
-                print(f"Error deleting message: {e}")
-
-            mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
-            bot.send_message(
-                message.chat.id,
-                f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
-                f"{mention}، تم مسح رسالتك تلقائيًا.\n"
-                "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
-                parse_mode="HTML"
-            )
-            return  # بمجرد اكتشاف أول كلمة ممنوعة نخرج من الحلقة
+  # بمجرد اكتشاف أول كلمة ممنوعة نخرج من الحلقة
 
 
 @bot.message_handler(commands=['opengbt'])
