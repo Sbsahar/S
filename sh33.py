@@ -2273,47 +2273,36 @@ def save_reply(message):
         bot.reply_to(message, f"✅ تم ربط الرد بــ `{keyword}`", parse_mode="Markdown")
     else:
         bot.reply_to(message, "❌ نوع الوسائط غير مدعوم")
-
 @bot.message_handler(func=lambda message: message.content_type == 'text')
-def check_banned_words_in_message(message):
+def handle_messages(message):
     if message.chat.type == "private":
         return
 
-    # تجاهل الأوامر (الرسائل التي تبدأ بـ / أو تحتوي على كيان bot_command)
-    if message.text.startswith('/') or any(entity.type == 'bot_command' for entity in message.entities or []):
-        return
-
-    group_id = str(message.chat.id)
-    if group_id not in banned_words or not banned_words[group_id]:
-        return
-
-    text = message.text
-
-    for word in banned_words[group_id]:
-        pattern = r'\b' + re.escape(word) + r'\b'
-        if re.search(pattern, text, flags=re.IGNORECASE):
-            try:
-                bot.delete_message(message.chat.id, message.message_id)
-            except Exception as e:
-                print(f"Error deleting message: {e}")
-
-            mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
-            bot.send_message(
-                message.chat.id,
-                f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
-                f"{mention}، تم مسح رسالتك تلقائيًا.\n"
-                "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
-                parse_mode="HTML"
-            )
-            return
-
-
-# معالجة الرسائل وإرسال الردود
-@bot.message_handler(func=lambda m: True)
-def handle_messages(message):
     chat_id = message.chat.id
     text = get_message_text(message).strip().lower()
-    
+
+    # === (1) فحص الكلمات المحظورة ===
+    group_id = str(chat_id)
+    if group_id in banned_words and banned_words[group_id]:
+        for word in banned_words[group_id]:
+            pattern = r'\b' + re.escape(word) + r'\b'
+            if re.search(pattern, text, flags=re.IGNORECASE):
+                try:
+                    bot.delete_message(chat_id, message.message_id)
+                except Exception as e:
+                    print(f"Error deleting message: {e}")
+
+                mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
+                bot.send_message(
+                    chat_id,
+                    f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
+                    f"{mention}، تم مسح رسالتك تلقائيًا.\n"
+                    "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
+                    parse_mode="HTML"
+                )
+                return  # إيقاف التنفيذ بعد حذف الرسالة
+
+    # === (2) فحص الردود التلقائية ===
     if message.reply_to_message:
         replied_text = get_message_text(message.reply_to_message).strip().lower()
         if replied_text in group_replies.get(chat_id, {}):
@@ -2336,19 +2325,16 @@ def send_auto_reply(target_msg, original_message=None):
         reply_to_id = original_message.message_id if original_message else target_msg.message_id
         
         if reply_data["type"] == "text":
-            bot.send_message(chat_id, 
-                reply_data["content"], 
-                reply_to_message_id=reply_to_id
-            )
+            bot.send_message(chat_id, reply_data["content"], reply_to_message_id=reply_to_id)
         else:
             method = getattr(bot, f'send_{reply_data["type"]}', None)
             if method:
                 method(chat_id, reply_data["content"], reply_to_message_id=reply_to_id)
             else:
-                bot.send_message(chat_id, "❌ نوع الرد غير مدعوم", 
-                               reply_to_message_id=reply_to_id)
+                bot.send_message(chat_id, "❌ نوع الرد غير مدعوم", reply_to_message_id=reply_to_id)
     except Exception as e:
-        print(f"Error: {e}")   
+        print(f"Error: {e}")
+
 
 
 
