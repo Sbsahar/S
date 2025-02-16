@@ -21,7 +21,7 @@ logging.basicConfig(
     handlers=[logging.FileHandler("bot.log"), logging.StreamHandler()]
 )
 
-TOKEN = '7327783438:AAGmnM5fE1aKO-bEYNfb1dqUHOfLryH3a6g'
+TOKEN = '7588670003:AAEJSTkUqMYiNdjL17UsoM5O4a87YPiHhsc'
 CHANNEL_URL = 'https://t.me/SYR_SB'
 CHANNEL_USERNAME = 'SYR_SB' 
 DEVELOPER_CHAT_ID = '6789179634'
