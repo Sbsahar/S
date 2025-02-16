@@ -386,6 +386,18 @@ def is_user_subscribed(user_id):
     except Exception as e:
         print(f"Error checking subscription: {e}")
         return False
+@bot.chat_member_handler()
+def welcome_developer(update: ChatMemberUpdated):
+    """ترحب بالمطور عند انضمامه إلى أي مجموعة يكون فيها البوت"""
+    if update.new_chat_member.user.id == DEVELOPER_CHAT_ID and update.new_chat_member.status in ["member", "administrator", "creator"]:
+        bot.send_message(
+            update.chat.id,
+            f"⚡ <b>انضم مطور البوت</b> <a href='tg://user?id={DEVELOPER_CHAT_ID}'>@SB_SAHAR</a> <b>إلى المجموعة</b> ⚡\n\n"
+            "☺️ <b>أهلاً بك مطوري العزيز!</b>",
+            parse_mode="HTML"
+        )
+
+
 @bot.message_handler(content_types=['left_chat_member'])
 def handle_manual_ban(message):
     """تسجيل عمليات الطرد أو الحظر اليدوي وحفظها في التقرير اليومي"""
