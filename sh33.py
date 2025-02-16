@@ -657,7 +657,36 @@ def handle_closegbt_command(message):
     except Exception as e:
         print(f"Error checking admin status: {e}")
         bot.send_message(message.chat.id, "حدث خطأ أثناء التحقق من الصلاحيات.")
-                
+@bot.message_handler(func=lambda message: message.content_type == 'text')
+def check_banned_words_in_message(message):
+    if message.chat.type == "private":
+        return
+
+    group_id = str(message.chat.id)
+    if group_id not in banned_words or not banned_words[group_id]:
+        return
+
+    text = message.text
+
+    # البحث عن الكلمات المحظورة ككلمات كاملة مع تجاهل حالة الحروف
+    for word in banned_words[group_id]:
+        pattern = r'\b' + re.escape(word) + r'\b'
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            try:
+                bot.delete_message(message.chat.id, message.message_id)
+            except Exception as e:
+                print(f"Error deleting message: {e}")
+
+            mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
+            bot.send_message(
+                message.chat.id,
+                f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
+                f"{mention}، تم مسح رسالتك تلقائيًا.\n"
+                "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
+                parse_mode="HTML"
+            )
+            return  #
+            
         
 @bot.message_handler(commands=['ban'])
 def ban_user(message):
@@ -2078,35 +2107,7 @@ def reset_daily_reports():
     daily_reports = {group_id: {"banned": [], "muted": [], "deleted_content": [], "manual_actions": []} for group_id in activated_groups}
     print("✅ تم إعادة تصفير السجلات اليومية.")
     threading.Timer(86400, reset_daily_reports).start()  # إعادة التصغير بعد 24 ساعة
-@bot.message_handler(func=lambda message: message.content_type == 'text')
-def check_banned_words_in_message(message):
-    if message.chat.type == "private":
-        return
 
-    group_id = str(message.chat.id)
-    if group_id not in banned_words or not banned_words[group_id]:
-        return
-
-    text = message.text
-
-    # البحث عن الكلمات المحظورة ككلمات كاملة مع تجاهل حالة الحروف
-    for word in banned_words[group_id]:
-        pattern = r'\b' + re.escape(word) + r'\b'
-        if re.search(pattern, text, flags=re.IGNORECASE):
-            try:
-                bot.delete_message(message.chat.id, message.message_id)
-            except Exception as e:
-                print(f"Error deleting message: {e}")
-
-            mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
-            bot.send_message(
-                message.chat.id,
-                f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
-                f"{mention}، تم مسح رسالتك تلقائيًا.\n"
-                "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
-                parse_mode="HTML"
-            )
-            return  #
             
 
 @bot.chat_member_handler(func=lambda message: message.new_chat_member is not None)
