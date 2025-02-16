@@ -1,4 +1,5 @@
 import telebot
+import re
 import opennsfw2 as n2
 from PIL import Image
 from yt_dlp import YoutubeDL
@@ -47,6 +48,10 @@ daily_reports = {}     # {group_id: {"banned": [], "muted": [], "deleted_content
 DETECTION_FILE = "detection_status.json"
 group_detection_status = {}
 REPLIES_FILE = "replies.json"
+BANNED_WORDS_FILE = "banned_words.json"
+
+# القاموس العام لتخزين الكلمات لكل مجموعة بصيغة {"group_id": ["كلمة1", "كلمة2", ...]}
+banned_words = {}
 # قائمة الصلاحيات الافتراضية مع أسمائها بالعربية
 PERMISSION_NAMES = {
     "can_delete_messages": "حذف الرسائل",
@@ -147,6 +152,21 @@ def check_gbt_status(chat_id):
         bot.send_message(chat_id, "للأسف، قام المشرفون بتعطيل الذكاء الاصطناعي. يرجى طلب تفعيله من أحد المشرفين.")
         return False
     return True
+
+def load_banned_words():
+    """تحميل الكلمات المحظورة عند بدء تشغيل البوت"""
+    global banned_words
+    try:
+        with open(BANNED_WORDS_FILE, "r", encoding="utf-8") as f:
+            banned_words = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        banned_words = {}
+
+def save_banned_words():
+    """حفظ الكلمات المحظورة إلى ملف JSON لضمان بقاء البيانات بعد إعادة التشغيل"""
+    with open(BANNED_WORDS_FILE, "w", encoding="utf-8") as f:
+        json.dump(banned_words, f, ensure_ascii=False, indent=4)
+        
 # ------ دوال تفعيل التقارير ------
 def save_mentions_data():
     with open('mentions.json', 'w') as f:
@@ -455,7 +475,59 @@ def handle_gbt_command(message):
     
     message_parts = split_message(response)
     for part in message_parts:
-        bot.send_message(message.chat.id, part, parse_mode="Markdown")        
+        bot.send_message(message.chat.id, part, parse_mode="Markdown")   
+@bot.message_handler(commands=['l1'])
+def add_banned_word(message):
+    if message.chat.type == "private":
+        bot.reply_to(message, "❌ هذا الأمر مخصص للمجموعات فقط.")
+        return
+
+    if not is_user_admin(bot, message.chat.id, message.from_user.id):
+        bot.reply_to(message, "❌ هذا الأمر متاح للمشرفين فقط.")
+        return
+
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        bot.reply_to(message, "❌ يرجى تزويد الكلمة التي تريد إضافتها.")
+        return
+
+    word = parts[1].strip()
+    group_id = str(message.chat.id)
+
+    banned_words.setdefault(group_id, [])
+    if word.lower() in [w.lower() for w in banned_words[group_id]]:
+        bot.reply_to(message, f"ℹ️ الكلمة '{word}' موجودة بالفعل في القائمة المحظورة لهذه المجموعة.")
+    else:
+        banned_words[group_id].append(word)
+        save_banned_words()
+        bot.reply_to(message, f"✅ تم إضافة الكلمة '{word}' إلى القائمة المحظورة للمجموعة.")
+@bot.message_handler(commands=['l1l'])
+def remove_banned_word(message):
+    if message.chat.type == "private":
+        bot.reply_to(message, "❌ هذا الأمر مخصص للمجموعات فقط.")
+        return
+
+    if not is_user_admin(bot, message.chat.id, message.from_user.id):
+        bot.reply_to(message, "❌ هذا الأمر متاح للمشرفين فقط.")
+        return
+
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        bot.reply_to(message, "❌ يرجى تزويد الكلمة التي تريد إزالتها.")
+        return
+
+    word = parts[1].strip()
+    group_id = str(message.chat.id)
+
+    if group_id not in banned_words or word.lower() not in [w.lower() for w in banned_words[group_id]]:
+        bot.reply_to(message, f"ℹ️ الكلمة '{word}' غير موجودة في القائمة المحظورة لهذه المجموعة.")
+    else:
+        banned_words[group_id] = [w for w in banned_words[group_id] if w.lower() != word.lower()]
+        save_banned_words()
+        bot.reply_to(message, f"✅ تم إزالة الكلمة '{word}' من القائمة المحظورة للمجموعة.")
+
+
+
 @bot.message_handler(commands=['opengbt'])
 def handle_opengbt_command(message):
     """ تفعيل الذكاء الاصطناعي """
@@ -2233,8 +2305,38 @@ def send_auto_reply(target_msg, original_message=None):
                                reply_to_message_id=reply_to_id)
     except Exception as e:
         print(f"Error: {e}")   
-        
-         
+@bot.message_handler(func=lambda message: message.content_type == 'text')
+def check_banned_words_in_message(message):
+    if message.chat.type == "private":
+        return
+
+    group_id = str(message.chat.id)
+    if group_id not in banned_words or not banned_words[group_id]:
+        return
+
+    text = message.text
+
+    # البحث عن الكلمات المحظورة ككلمات كاملة مع تجاهل حالة الحروف
+    for word in banned_words[group_id]:
+        pattern = r'\b' + re.escape(word) + r'\b'
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            try:
+                bot.delete_message(message.chat.id, message.message_id)
+            except Exception as e:
+                print(f"Error deleting message: {e}")
+
+            mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
+            bot.send_message(
+                message.chat.id,
+                f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
+                f"{mention}، تم مسح رسالتك تلقائيًا.\n"
+                "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
+                parse_mode="HTML"
+            )
+            return  # بمجرد اكتشاف أول كلمة ممنوعة نخرج من الحلقة
+
+
+load_banned_words()         
 load_detection_status()          
 reset_daily_reports()        
 try:
