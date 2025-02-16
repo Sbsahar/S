@@ -72,16 +72,6 @@ def load_welcome():
             welcome_messages = json.load(f)
     except FileNotFoundError:
         welcome_messages = {}
-def load_detection_status():
-    global group_detection_status
-    try:
-        with open(DETECTION_FILE, 'r', encoding='utf-8') as f:
-            group_detection_status = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        group_detection_status = {}
-def save_detection_status():
-    with open(DETECTION_FILE, 'w', encoding='utf-8') as f:
-        json.dump(group_detection_status, f, ensure_ascii=False, indent=4)
 
 def save_welcome():
     with open('welcome.json', 'w') as f:
@@ -206,7 +196,20 @@ def check_image_safety(image_path):
         print(f"حدث خطأ أثناء تحليل الصورة: {e}")
         return 'error'
             
-           
+def load_detection_status():
+    global group_detection_status
+    try:
+        with open(DETECTION_FILE, 'r', encoding='utf-8') as f:
+            group_detection_status = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        group_detection_status = {}
+def save_detection_status():
+    with open(DETECTION_FILE, 'w', encoding='utf-8') as f:
+        json.dump(group_detection_status, f, ensure_ascii=False, indent=4)
+
+def save_welcome():
+    with open('welcome.json', 'w') as f:
+        json.dump(welcome_messages, f, indent=2)           
             
 
 
