@@ -2103,14 +2103,14 @@ def send_audio(message):
     audio_file_id = 'https://t.me/srevbo67/6' 
     bot.send_audio(message.chat.id, audio_file_id, caption="يلعن روحه بقبره")  
 @bot.message_handler(func=lambda message: 'مطور' in message.text or 'المطور' in message.text)
-def send_audio(message):
-    audio_file_id = 'https://t.me/srevbo67/8'  # رابط الملف الصوتي
+def send_animation(message):
+    animation_file_id = 'https://t.me/srevbo67/8'  # رابط الصورة المتحركة (GIF)
 
-    caption = """<b>✦مـطور الـبوت✦</b>  
+    caption = """<b>✦ مـطور الـبوت ✦</b>  
 🚀 <b>تواصـل مـباشر مع المـطـور</b> عبر الزر أدناه.
 
 🌟 <b>مـعلومـات الـمـطـور:</b>  
-👤 <b>الاســم:</b> 𝐒𝐀𝐇𝐀𝐑 𝐒𝐁 <i>(سـحـر)</i>  
+👤 <b>الاســم:</b> 𝐒𝐀𝐇𝐀𝐑 𝐒𝐵 <i>(سـحـر)</i>  
 🔹 <b>اليـوزر:</b> @SB_SAHAR  
 🆔 <b>الايـدي:</b> 6789179634  
 ⚡ <b>الرتبــه:</b> <i>DEV الـمـطـور</i>  
@@ -2121,8 +2121,10 @@ def send_audio(message):
 
     # إنشاء زر تفاعلي للتواصل مع المطور
     keyboard = types.InlineKeyboardMarkup()
-    contact_button = types.InlineKeyboardButton(" 𝙳𝙴𝚅 𝚂𝙰𝙷𝙰𝚁", url="https://t.me/SB_SAHAR")
+    contact_button = types.InlineKeyboardButton("💬 𝙳𝙴𝚅 𝚂𝙰𝙷𝙰𝚁", url="https://t.me/SB_SAHAR")
     keyboard.add(contact_button)
+
+    bot.send_animation(message.chat.id, animation_file_id, caption=caption, parse_mode="HTML", reply_markup=keyboard)
 
 
 # دالة إضافة الردود
