@@ -2101,7 +2101,30 @@ def syrian_reply(message):
 @bot.message_handler(func=lambda message: 'يلعن روحه' in message.text)
 def send_audio(message):
     audio_file_id = 'https://t.me/srevbo67/6' 
-    bot.send_audio(message.chat.id, audio_file_id, caption="يلعن روحه بقبره")    
+    bot.send_audio(message.chat.id, audio_file_id, caption="يلعن روحه بقبره")  
+@bot.message_handler(func=lambda message: 'مطور' in message.text or 'المطور' in message.text)
+def send_audio(message):
+    audio_file_id = 'https://t.me/srevbo67/8'  # رابط الملف الصوتي
+
+    caption = """<b>✦مـطور الـبوت✦</b>  
+🚀 <b>تواصـل مـباشر مع المـطـور</b> عبر الزر أدناه.
+
+🌟 <b>مـعلومـات الـمـطـور:</b>  
+👤 <b>الاســم:</b> 𝐒𝐀𝐇𝐀𝐑 𝐒𝐁 <i>(سـحـر)</i>  
+🔹 <b>اليـوزر:</b> @SB_SAHAR  
+🆔 <b>الايـدي:</b> 6789179634  
+⚡ <b>الرتبــه:</b> <i>DEV الـمـطـور</i>  
+📜 <b>البايـو:</b>  
+ᵖʳᵒᵍʳᵃᵐᵐᵉʳ ʷᶦᵗʰ ⁱⁿᵗᵉˡˡᶦᵍᵉⁿᶜᵉ ᵇʳᵉᵃᵏᶦⁿᵍ ᵗʰᵉ ⁱᵐᵖᵒˢˢᶦᵇˡᵉ  
+🔗 <b>قنـواتـي:</b> @SYR_SB | @SYR_Bbot
+"""
+
+    # إنشاء زر تفاعلي للتواصل مع المطور
+    keyboard = types.InlineKeyboardMarkup()
+    contact_button = types.InlineKeyboardButton(" 𝙳𝙴𝚅 𝚂𝙰𝙷𝙰𝚁", url="https://t.me/SB_SAHAR")
+    keyboard.add(contact_button)
+
+
 # دالة إضافة الردود
 @bot.message_handler(commands=['ad', 'adde'])
 def manage_replies(message):
