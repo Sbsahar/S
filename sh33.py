@@ -501,6 +501,32 @@ def add_banned_word(message):
         banned_words[group_id].append(word)
         save_banned_words()
         bot.reply_to(message, f"✅ تم إضافة الكلمة '{word}' إلى القائمة المحظورة للمجموعة.")
+
+
+@bot.message_handler(commands=['l1l'])
+def remove_banned_word(message):
+    if message.chat.type == "private":
+        bot.reply_to(message, "❌ هذا الأمر مخصص للمجموعات فقط.")
+        return
+
+    if not is_user_admin(bot, message.chat.id, message.from_user.id):
+        bot.reply_to(message, "❌ هذا الأمر متاح للمشرفين فقط.")
+        return
+
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2:
+        bot.reply_to(message, "❌ يرجى تزويد الكلمة التي تريد إزالتها.")
+        return
+
+    word = parts[1].strip()
+    group_id = str(message.chat.id)
+
+    if group_id not in banned_words or word.lower() not in [w.lower() for w in banned_words[group_id]]:
+        bot.reply_to(message, f"ℹ️ الكلمة '{word}' غير موجودة في القائمة المحظورة لهذه المجموعة.")
+    else:
+        banned_words[group_id] = [w for w in banned_words[group_id] if w.lower() != word.lower()]
+        save_banned_words()
+        bot.reply_to(message, f"✅ تم إزالة الكلمة '{word}' من القائمة المحظورة للمجموعة.")
 @bot.message_handler(func=lambda message: message.content_type == 'text')
 def check_banned_words_in_message(message):
     if message.chat.type == "private":
@@ -530,33 +556,6 @@ def check_banned_words_in_message(message):
                 parse_mode="HTML"
             )
             return  # بمجرد اكتشاف أول كلمة ممنوعة نخرج من الحلقة
-
-
-@bot.message_handler(commands=['l1l'])
-def remove_banned_word(message):
-    if message.chat.type == "private":
-        bot.reply_to(message, "❌ هذا الأمر مخصص للمجموعات فقط.")
-        return
-
-    if not is_user_admin(bot, message.chat.id, message.from_user.id):
-        bot.reply_to(message, "❌ هذا الأمر متاح للمشرفين فقط.")
-        return
-
-    parts = message.text.split(maxsplit=1)
-    if len(parts) < 2:
-        bot.reply_to(message, "❌ يرجى تزويد الكلمة التي تريد إزالتها.")
-        return
-
-    word = parts[1].strip()
-    group_id = str(message.chat.id)
-
-    if group_id not in banned_words or word.lower() not in [w.lower() for w in banned_words[group_id]]:
-        bot.reply_to(message, f"ℹ️ الكلمة '{word}' غير موجودة في القائمة المحظورة لهذه المجموعة.")
-    else:
-        banned_words[group_id] = [w for w in banned_words[group_id] if w.lower() != word.lower()]
-        save_banned_words()
-        bot.reply_to(message, f"✅ تم إزالة الكلمة '{word}' من القائمة المحظورة للمجموعة.")
-
 
 
 @bot.message_handler(commands=['opengbt'])
