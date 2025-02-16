@@ -1236,7 +1236,7 @@ def back_to_settings(call):
     bot.edit_message_text(
         "<b>⚙️ إعـدادات الـبـوت</b>\n\nاخـتـر أحـد الأقـسـام أدنـاه:", 
         chat_id, message_id, reply_markup=keyboard, parse_mode="HTML"
-    )
+        )
 
 # الأمر /pp لتثبيت رسالة
 
