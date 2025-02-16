@@ -1445,7 +1445,8 @@ def get_group_info(message):
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
     """التعامل مع الصور المرسلة والتحقق من محتواها باستخدام مكتبة OpenNSFW2"""
-    if group_detection_status.get(message.chat.id, 'disabled') == 'enabled':
+    chat_id = str(message.chat.id)  # تأكد من تخزين كـ string
+    if group_detection_status.get(chat_id, 'disabled') == 'enabled':
         # الحصول على الـ file_id والمعلومات
         file_id = message.photo[-1].file_id
         file_info = bot.get_file(file_id)
@@ -1472,15 +1473,16 @@ def handle_photo(message):
             if res == 'nude':
                 bot.delete_message(message.chat.id, message.message_id)
                 warning_message = (
-                    f"🚫 <b>لا تبعت صور غير لائقة ياا {message.from_user.first_name}!</b>\n"
+                    f"🚫 <b>لا تبعت صور غير لائقة يا {message.from_user.first_name}!</b>\n"
                     f"🥷🏻 @{message.from_user.username or str(message.from_user.id)}، <b>هذا تنبيه لك!</b>\n"
                     "<b>🤖 البوت يراقب ويمنع المحتوى غير الملائم 🛂</b>"
                 )
                 bot.send_message(message.chat.id, warning_message, parse_mode="HTML")
-                update_violations(message.from_user.id, message.chat.id)
+                update_violations(str(message.from_user.id), chat_id)
 
         except Exception as e:
-            print(f"حدث خطأ أثناء معالجة الصورة: {e}")
+            print(f"❌ حدث خطأ أثناء معالجة الصورة: {e}")
+
 @bot.message_handler(content_types=['sticker'])
 def handle_sticker(message):
     """التعامل مع الملصقات المرسلة والتحقق من محتواها باستخدام مكتبة OpenNSFW2"""
