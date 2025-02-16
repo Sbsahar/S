@@ -501,6 +501,37 @@ def add_banned_word(message):
         banned_words[group_id].append(word)
         save_banned_words()
         bot.reply_to(message, f"✅ تم إضافة الكلمة '{word}' إلى القائمة المحظورة للمجموعة.")
+@bot.message_handler(func=lambda message: message.content_type == 'text')
+def check_banned_words_in_message(message):
+    if message.chat.type == "private":
+        return
+
+    group_id = str(message.chat.id)
+    if group_id not in banned_words or not banned_words[group_id]:
+        return
+
+    text = message.text
+
+    # البحث عن الكلمات المحظورة ككلمات كاملة مع تجاهل حالة الحروف
+    for word in banned_words[group_id]:
+        pattern = r'\b' + re.escape(word) + r'\b'
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            try:
+                bot.delete_message(message.chat.id, message.message_id)
+            except Exception as e:
+                print(f"Error deleting message: {e}")
+
+            mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
+            bot.send_message(
+                message.chat.id,
+                f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
+                f"{mention}، تم مسح رسالتك تلقائيًا.\n"
+                "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
+                parse_mode="HTML"
+            )
+            return  # بمجرد اكتشاف أول كلمة ممنوعة نخرج من الحلقة
+
+
 @bot.message_handler(commands=['l1l'])
 def remove_banned_word(message):
     if message.chat.type == "private":
@@ -2305,35 +2336,6 @@ def send_auto_reply(target_msg, original_message=None):
                                reply_to_message_id=reply_to_id)
     except Exception as e:
         print(f"Error: {e}")   
-@bot.message_handler(func=lambda message: message.content_type == 'text')
-def check_banned_words_in_message(message):
-    if message.chat.type == "private":
-        return
-
-    group_id = str(message.chat.id)
-    if group_id not in banned_words or not banned_words[group_id]:
-        return
-
-    text = message.text
-
-    # البحث عن الكلمات المحظورة ككلمات كاملة مع تجاهل حالة الحروف
-    for word in banned_words[group_id]:
-        pattern = r'\b' + re.escape(word) + r'\b'
-        if re.search(pattern, text, flags=re.IGNORECASE):
-            try:
-                bot.delete_message(message.chat.id, message.message_id)
-            except Exception as e:
-                print(f"Error deleting message: {e}")
-
-            mention = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
-            bot.send_message(
-                message.chat.id,
-                f"⚠️ <b>تم استخدام كلمة محظورة!</b>\n"
-                f"{mention}، تم مسح رسالتك تلقائيًا.\n"
-                "🚫 ممنوع إرسال كلمات محظورة في المجموعة.",
-                parse_mode="HTML"
-            )
-            return  # بمجرد اكتشاف أول كلمة ممنوعة نخرج من الحلقة
 
 
 load_banned_words()         
