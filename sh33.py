@@ -1170,14 +1170,16 @@ def handle_settings_callback(call):
             "• <code>/unmute</code> - لإلغاء التقييد"
         )
     elif setting_type == "settings_group":
-     text = (
+    text = (
         "<b>⚙️ إعدادات المجموعة</b>\n\n"
         "• <code>/pp</code> - تثبيت رسالة\n"
         "• <code>/de</code> - حذف رسالة\n"
         "• <code>/wwa</code> - إرسال إنذار لعضو (3 إنذارات = تقييد)\n"
         "• <code>/unwa</code> - إزالة الإنذارات عن مستخدم\n"
         "• <code>/pr</code> - رفع مشرف\n"
-        "• <code>/dt</code> - تنزيل مشرف وإزالة جميع صلاحياته (بالرد أو بالإيدي)"
+        "• <code>/dt</code> - تنزيل مشرف وإزالة جميع صلاحياته (بالرد أو بالإيدي)\n"
+        "• <code>/l1</code> - إضافة كلمة محظورة للاستخدام في المجموعة\n"
+        "• <code>/l1l</code> - إزالة كلمة من قائمة الحظر"
     )
     elif setting_type == "settings_replies":
         text = (
